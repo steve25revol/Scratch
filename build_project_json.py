@@ -368,7 +368,7 @@ BROADCASTS = {
 
 def _make_broadcast_vars():
     """Return broadcast dict for target."""
-    return {v: [k] for k, v in BROADCASTS.items()}
+    return {v: k for k, v in BROADCASTS.items()}
 
 
 # ============================================================
