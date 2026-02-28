@@ -22,7 +22,8 @@ from build_project_json import (
     build_project,
 )
 
-OUTPUT_DIR = os.path.expanduser("~/scratch")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_DIR = SCRIPT_DIR
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "stickman-office-escape.sb3")
 
 # Tiny transparent SVG for invisible sprites
