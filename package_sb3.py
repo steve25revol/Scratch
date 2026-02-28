@@ -4,6 +4,7 @@
 import hashlib
 import json
 import os
+import struct
 import zipfile
 
 from generate_svgs import generate_all_svgs
@@ -74,17 +75,43 @@ def make_costume_entry_with_center(name, svg_string, cx, cy):
     return entry, md5ext, data
 
 
+def _wav_sample_count(wav_bytes):
+    """Parse WAV bytes and return (sample_rate, sample_count)."""
+    rate = 22050
+    sample_count = 0
+    channels = 1
+    bits_per_sample = 16
+    i = 12  # skip RIFF header + WAVE tag
+    while i < len(wav_bytes) - 8:
+        chunk_id = wav_bytes[i:i + 4]
+        chunk_size = struct.unpack('<I', wav_bytes[i + 4:i + 8])[0]
+        if chunk_id == b'fmt ':
+            fmt = struct.unpack('<HHIIHH', wav_bytes[i + 8:i + 24])
+            channels = fmt[1]
+            rate = fmt[2]
+            bits_per_sample = fmt[5]
+        elif chunk_id == b'data':
+            bytes_per_sample = (bits_per_sample // 8) * channels
+            if bytes_per_sample > 0:
+                sample_count = chunk_size // bytes_per_sample
+        i += 8 + chunk_size
+        if chunk_size % 2:
+            i += 1  # WAV chunks are word-aligned
+    return rate, sample_count
+
+
 def make_sound_entry(name, wav_bytes):
     """Create a sound dict and return (entry, md5ext, data_bytes)."""
     asset_id = md5_of(wav_bytes)
     md5ext = f"{asset_id}.wav"
+    rate, sample_count = _wav_sample_count(wav_bytes)
     entry = {
         "assetId": asset_id,
         "name": name,
         "dataFormat": "wav",
         "md5ext": md5ext,
-        "rate": 22050,
-        "sampleCount": 0,  # Scratch doesn't strictly need this
+        "rate": rate,
+        "sampleCount": sample_count,
     }
     return entry, md5ext, wav_bytes
 
